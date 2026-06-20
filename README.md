@@ -1,4 +1,4 @@
-# Cloudi — Panel de administración multi-tienda (demo)
+# Cloudi — Panel de administración multi-tienda (demo) | Proyecto realizado a lo largo de 2024-2025 |
 
 Demo full-stack de un sistema de login + panel de administración (CRUD) que permite gestionar distintos tipos de "productos" — funciones de cine, ropa, electrónica, libros, galería de recuerdos y comisión directiva — según el rubro de cada cuenta.
 
