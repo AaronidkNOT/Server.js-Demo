@@ -631,7 +631,7 @@ app.use((err, req, res, next) => {
 reiniciarDatosDeDemo()
     .then(() => {
         app.listen(PORT, () => {
-            console.log(`🚀 Cloudi (demo) escuchando en http://localhost:${PORT}`);
+            console.log(`   Cloudi (demo) escuchando en http://localhost:${PORT}`);
             console.log(`   Usuarios de prueba: "cine" / "juegos" — contraseña: demo1234`);
         });
     })
