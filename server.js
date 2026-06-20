@@ -1,24 +1,24 @@
 /**
- * server.js
- * ============================================================================
- * Backend de "Cloudi" - una demo de panel de administración multi-tienda.
- *
- * Qué hace este servidor:
- *  - Sirve el frontend (HTML/CSS/JS) que está en la carpeta /public.
- *  - Expone una API REST para iniciar sesión y administrar "productos"
- *    (que pueden ser películas, ropa, libros, electrónica, etc. según el
- *    tipo de tienda).
- *  - Protege las rutas de escritura con autenticación basada en JWT.
- *  - Procesa y optimiza las imágenes que se suben (las redimensiona y las
- *    convierte a formato .webp con la librería "sharp").
- *
- * Importante: esto es un proyecto de DEMOSTRACIÓN.
- *  - Los "usuarios" y "productos" viven en memoria (arrays de JS), no en una
- *    base de datos real. Si reiniciás el servidor, los datos vuelven a su
- *    estado inicial (ver /data/seedData.js).
- *  - Para usar esto en producción habría que reemplazar el array `productos`
- *    y `usuarios` por una base de datos real (MongoDB, PostgreSQL, etc.).
- * ============================================================================
+    server.js
+    ============================================================================
+    Backend de "Cloudi" - una demo de panel de administración multi-tienda.
+
+    Qué hace este servidor:
+    - Sirve el frontend (HTML/CSS/JS) que está en la carpeta /public.
+    - Expone una API REST para iniciar sesión y administrar "productos"
+    (que pueden ser películas, ropa, libros, electrónica, etc. según el
+    tipo de tienda).
+    - Protege las rutas de escritura con autenticación basada en JWT.
+    - Procesa y optimiza las imágenes que se suben (las redimensiona y las
+    convierte a formato .webp con la librería "sharp").
+
+    Importante: esto es un proyecto de DEMOSTRACIÓN.
+    - Los "usuarios" y "productos" viven en memoria (arrays de JS), no en una
+    base de datos real. Si reiniciás el servidor, los datos vuelven a su
+    estado inicial (ver /data/seedData.js).
+    - Para usar esto en producción habría que reemplazar el array `productos`
+    y `usuarios` por una base de datos real (MongoDB, PostgreSQL, etc.).
+    ============================================================================
  */
 
 const express = require('express');
@@ -39,6 +39,7 @@ const { generarDatosIniciales } = require('./data/seedData');
 // Cargamos un archivo ".env" (si existe) a mano, sin depender de paquetes
 // externos. Así el proyecto queda más liviano. El formato soportado es el
 // clásico CLAVE=valor, una por línea (igual que dotenv).
+
 function cargarVariablesDeEntorno() {
     const envPath = path.join(__dirname, '.env');
     if (!fs.existsSync(envPath)) return;
@@ -75,8 +76,8 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 
 if (!process.env.JWT_SECRET) {
     console.warn(
-        '⚠️  No definiste JWT_SECRET en un archivo .env. Se está usando una clave de desarrollo.\n' +
-        '   Esto está bien para probar la demo en tu máquina, pero NO la uses así en producción.\n' +
+        '   No definiste JWT_SECRET en un archivo .env. Se está usando una clave de desarrollo.\n' +
+        '   Esto está bien para probar la demo en tu máquina, pero NO lauses así en producción.\n' +
         '   Copiá ".env.example" como ".env" y poné tu propia clave.'
     );
 }
@@ -117,6 +118,7 @@ app.get('/', (req, res) => {
 // ----------------------------------------------------------------------------
 // 3) "BASE DE DATOS" EN MEMORIA (sólo para esta demo)
 // ----------------------------------------------------------------------------
+
 let usuarios = [];
 let productos = [];
 
@@ -584,6 +586,7 @@ app.delete('/api/productos/:id', verificarToken, (req, res) => {
 // datos en memoria pueden terminar "desordenados". Este endpoint los
 // restaura. Requiere estar logueado para evitar que bots anónimos lo
 // disparen en bucle.
+
 app.post('/api/demo/reset', verificarToken, async (req, res) => {
     try {
         await reiniciarDatosDeDemo();
@@ -597,6 +600,7 @@ app.post('/api/demo/reset', verificarToken, async (req, res) => {
 // ----------------------------------------------------------------------------
 // 9) MANEJO DE RUTAS NO ENCONTRADAS Y ERRORES
 // ----------------------------------------------------------------------------
+
 app.use('/api', (req, res) => {
     res.status(404).json({ mensaje: 'Endpoint no encontrado.' });
 });
@@ -607,6 +611,7 @@ app.use((req, res) => {
 
 // Middleware de errores (debe ir al final). Acá caen, por ejemplo, los
 // errores que lanza multer (imagen demasiado grande, tipo no permitido, etc).
+
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError || err.message === 'Solo se permiten archivos de imagen.') {
         return res.status(400).json({ mensaje: `Error al subir el archivo: ${err.message}` });
@@ -622,6 +627,7 @@ app.use((err, req, res, next) => {
 // estén listos ANTES de empezar a aceptar pedidos, para evitar una
 // condición de carrera donde alguien intenta loguearse antes de que las
 // contraseñas terminen de encriptarse.
+
 reiniciarDatosDeDemo()
     .then(() => {
         app.listen(PORT, () => {
