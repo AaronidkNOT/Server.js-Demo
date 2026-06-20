@@ -1,0 +1,509 @@
+<!--
+    dashboard.html — panel de administración de la demo "Cloudi".
+    Estructura: un selector de "tipo de producto" muestra/oculta distintos
+    formularios (cine, ropa, electrónica, libros, recuerdos, comisión, etc.)
+    y más abajo se lista lo que el usuario logueado ya creó, con buscador,
+    filtro, orden y paginado. Toda la lógica vive en dashboard.js.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Cloudi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/png" href="imagenes/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <header>
+        <h1 id="cloudi">Cloud¡</h1>
+        <div class="user-info">
+            <span id="user-name"></span>
+            <!-- Botón sólo para esta demo pública: restaura los datos de
+                ejemplo si alguien los borró o desordenó probando la app. -->
+            <button id="reset-demo-btn" type="button" title="Restaura los productos de ejemplo a su estado original">
+                <i class="fas fa-rotate-left"></i> Reiniciar demo
+            </button>
+            <button id="logout-btn">Cerrar Sesión</button>
+        </div>
+    </header>
+    <main>
+        <div id="notification-container"></div>
+        <div class="dashboard-container">
+            <div class="add-product-form">
+                <h2>Agregar Nuevo Producto</h2>
+                <div class="store-selector">
+                    <label for="form-selector">Seleccionar tipo de tienda:</label>
+                    <select id="form-selector">
+                        <option value="general">Tienda General</option>
+                        <option value="ropa">Ropa</option>
+                        <option value="electronica">Electrónica</option>
+                        <option value="libros">Libros</option>
+                        <option value="cine">Peliculas</option>
+                        <option value="recuerdos">Galería de Recuerdos</option>
+                        <option value="comision">Comisión Directiva</option>
+                    </select>
+                </div>
+                
+                <!-- Formulario: producto genérico (tienda general) -->
+                <form id="form-general" class="product-form active" enctype="multipart/form-data">
+                    <input type="hidden" name="tipo" value="general">
+                    <div>
+                        <label for="product-name">Nombre:</label>
+                        <input type="text" id="product-name" name="nombre" required>
+                    </div>
+                    <div>
+                        <label for="product-description">Descripción:</label>
+                        <textarea id="product-description" name="descripcion" maxlength="200" required></textarea>
+                        <span id="product-description-counter" class="char-counter">0/200</span>
+                    </div>
+                    <div>
+                        <label for="product-price">Precio:</label>
+                        <input type="number" id="product-price" name="precio" step="0.01" required>
+                    </div>
+                    <div>
+                        <label for="product-stock">Stock:</label>
+                        <input type="number" id="product-stock" name="stock" min="0" required>
+                    </div>
+                    <div>
+                        <label for="product-sku">SKU (Código del producto):</label>
+                        <input type="text" id="product-sku" name="sku">
+                    </div>
+                    <div>
+                        <label for="product-category">Categoría:</label>
+                        <input type="text" id="product-category" name="categoria">
+                    </div>
+                    <div>
+                        <label for="product-weight">Peso (kg):</label>
+                        <input type="number" id="product-weight" name="peso" step="0.01" min="0">
+                    </div>
+                    <div>
+                        <label for="product-status">Estado:</label>
+                        <select id="product-status" name="estado">
+                            <option value="activo">Activo</option>
+                            <option value="borrador">Borrador</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                    <div class="file-upload-container">
+                        <label for="product-images" class="custom-file-upload-label">
+                            <i class="fas fa-image"></i>
+                            <span id="file-name-display">Seleccionar imágenes (múltiples)</span>
+                        </label>
+                        <input type="file" id="product-images" name="imagenes" accept="image/*" multiple>
+                        <div id="preview-images-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    </div>
+                    <button type="submit">Crear Producto</button>
+                </form>
+
+                <!-- Formulario: ropa (con stock por talla) -->
+                <form id="form-ropa" class="product-form" enctype="multipart/form-data" style="display: none;">
+                    <input type="hidden" name="tipo" value="ropa">
+                    <div>
+                        <label for="ropa-name">Nombre:</label>
+                        <input type="text" id="ropa-name" name="nombre" required>
+                    </div>
+                    <div>
+                        <label for="ropa-description">Descripción:</label>
+                        <textarea id="ropa-description" name="descripcion" maxlength="200" required></textarea>
+                        <span id="ropa-description-counter" class="char-counter">0/200</span>
+                    </div>
+                    <div>
+                        <label for="ropa-price">Precio:</label>
+                        <input type="number" id="ropa-price" name="precio" step="0.01" required>
+                    </div>
+                    <div>
+                        <label for="ropa-color">Color:</label>
+                        <input type="text" id="ropa-color" name="color" required>
+                    </div>
+                    <div>
+                        <label for="ropa-material">Material:</label>
+                        <input type="text" id="ropa-material" name="material">
+                    </div>
+                    <div>
+                        <label>Stock por Talla:</label>
+                        <div id="tallas-stock-container" class="tallas-stock-container">
+                            </div>
+                    </div>
+                    <div class="file-upload-container">
+                        <label for="ropa-images" class="custom-file-upload-label">
+                            <i class="fas fa-image"></i>
+                            <span id="ropa-file-name-display">Seleccionar imágenes (múltiples)</span>
+                        </label>
+                        <input type="file" id="ropa-images" name="imagenes" accept="image/*" multiple>
+                        <div id="ropa-preview-images-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    </div>
+                    <button type="submit">Crear Producto de Ropa</button>
+                </form>
+
+                <!-- Formulario: electrónica -->
+                <form id="form-electronica" class="product-form" enctype="multipart/form-data" style="display: none;">
+                    <input type="hidden" name="tipo" value="electronica">
+                    <div>
+                        <label for="electronica-name">Nombre:</label>
+                        <input type="text" id="electronica-name" name="nombre" required>
+                    </div>
+                    <div>
+                        <label for="electronica-description">Descripción:</label>
+                        <textarea id="electronica-description" name="descripcion" maxlength="200" required></textarea>
+                        <span id="electronica-description-counter" class="char-counter">0/200</span>
+                    </div>
+                    <div>
+                        <label for="electronica-price">Precio:</label>
+                        <input type="number" id="electronica-price" name="precio" step="0.01" required>
+                    </div>
+                    <div>
+                        <label for="electronica-stock">Stock:</label>
+                        <input type="number" id="electronica-stock" name="stock" min="0" required>
+                    </div>
+                    <div>
+                        <label for="electronica-brand">Marca:</label>
+                        <input type="text" id="electronica-brand" name="marca" required>
+                    </div>
+                    <div>
+                        <label for="electronica-model">Modelo:</label>
+                        <input type="text" id="electronica-model" name="modelo" required>
+                    </div>
+                    <div>
+                        <label for="electronica-specs">Especificaciones Técnicas:</label>
+                        <textarea id="electronica-specs" name="especificaciones_tecnicas"></textarea>
+                    </div>
+                    <div class="file-upload-container">
+                        <label for="electronica-images" class="custom-file-upload-label">
+                            <i class="fas fa-image"></i>
+                            <span id="electronica-file-name-display">Seleccionar imágenes (múltiples)</span>
+                        </label>
+                        <input type="file" id="electronica-images" name="imagenes" accept="image/*" multiple>
+                        <div id="electronica-preview-images-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    </div>
+                    <button type="submit">Crear Producto Electrónico</button>
+                </form>
+
+                <!-- Formulario: libros -->
+                <form id="form-libros" class="product-form" enctype="multipart/form-data" style="display: none;">
+                    <input type="hidden" name="tipo" value="libros">
+                    <div>
+                        <label for="libro-title">Título:</label>
+                        <input type="text" id="libro-title" name="titulo" required>
+                    </div>
+                    <div>
+                        <label for="libro-description">Descripción:</label>
+                        <textarea id="libro-description" name="descripcion" maxlength="200" required></textarea>
+                        <span id="libro-description-counter" class="char-counter">0/200</span>
+                    </div>
+                    <div>
+                        <label for="libro-price">Precio:</label>
+                        <input type="number" id="libro-price" name="precio" step="0.01" required>
+                    </div>
+                    <div>
+                        <label for="libro-stock">Stock:</label>
+                        <input type="number" id="libro-stock" name="stock" min="0" required>
+                    </div>
+                    <div>
+                        <label for="libro-author">Autor:</label>
+                        <input type="text" id="libro-author" name="autor" required>
+                    </div>
+                    <div>
+                        <label for="libro-publisher">Editorial:</label>
+                        <input type="text" id="libro-publisher" name="editorial">
+                    </div>
+                    <div>
+                        <label for="libro-isbn">ISBN:</label>
+                        <input type="text" id="libro-isbn" name="isbn">
+                    </div>
+                    <div>
+                        <label for="libro-genre">Género:</label>
+                        <input type="text" id="libro-genre" name="genero">
+                    </div>
+                    <div class="file-upload-container">
+                        <label for="libro-images" class="custom-file-upload-label">
+                            <i class="fas fa-image"></i>
+                            <span id="libro-file-name-display">Seleccionar imágenes (múltiples)</span>
+                        </label>
+                        <input type="file" id="libro-images" name="imagenes" accept="image/*" multiple>
+                        <div id="libro-preview-images-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    </div>
+                    <button type="submit">Crear Producto Libro</button>
+                </form>
+
+                <!-- Formulario: función de cine -->
+                <form id="form-cine" class="product-form" enctype="multipart/form-data" style="display: none;">
+                    <input type="hidden" name="tipo" value="cine">
+                    <div>
+                        <label for="cine-title">Título de la película:</label>
+                        <input type="text" id="cine-title" name="titulo" required>
+                    </div>
+                    <div>
+                        <label for="cine-description">Descripción:</label>
+                        <textarea id="cine-description" name="descripcion" maxlength="200" required></textarea>
+                        <span id="cine-description-counter" class="char-counter">0/200</span>
+                    </div>
+                    <div>
+                        <label for="cine-price">Precio de la entrada:</label>
+                        <input type="number" id="cine-price" name="precio" step="0.01" required>
+                    </div>
+                    <div>
+                        <label for="cine-duration">Duración (minutos):</label>
+                        <input type="text" id="cine-duration" name="duracion" required>
+                    </div>
+                    <div>
+                        <label for="cine-genre">Género:</label>
+                        <input type="text" id="cine-genre" name="genero">
+                    </div>
+                    <div>
+                        <label for="cine-trailer">URL del Tráiler (YouTube):</label>
+                        <input type="text" id="cine-trailer" name="trailer" required>
+                    </div>
+                    <div>
+                        <label for="cine-clasificacion">Clasificación:</label>
+                        <select id="cine-clasificacion" name="clasificacionEdad" required>
+                            <option value="ATP">ATP</option>
+                            <option value="+7">+7</option>
+                            <option value="+13">+13</option>
+                            <option value="+16">+16</option>
+                            <option value="+18">+18</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="cine-fecha">Fecha y Hora de la Función:</label>
+                        <input type="datetime-local" id="cine-fecha" name="fechaFuncion" required>
+                    </div>
+                    <div class="file-upload-container">
+                        <label for="cine-images" class="custom-file-upload-label">
+                            <i class="fas fa-image"></i>
+                            <span id="cine-file-name-display">Seleccionar imágenes (múltiples)</span>
+                        </label>
+                        <input type="file" id="cine-images" name="imagenes" accept="image/*" multiple>
+                        <div id="cine-preview-images-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    </div>
+                    <button type="submit">Crear Pelicula</button>
+                </form>
+                
+                <!-- Formulario: galería de recuerdos -->
+                <form id="form-recuerdos" class="product-form" enctype="multipart/form-data" style="display: none;" novalidate>
+                    <input type="hidden" name="tipo" value="recuerdos">
+                    <div>
+                        <label for="recuerdos-title">Título del evento:</label>
+                        <input type="text" id="recuerdos-title" name="titulo" required>
+                    </div>
+                    <div>
+                        <label for="recuerdos-description">Descripción:</label>
+                        <textarea id="recuerdos-description" name="descripcion" maxlength="200" required></textarea>
+                        <span id="recuerdos-description-counter" class="char-counter">0/200</span>
+                    </div>
+                    <div class="file-upload-container">
+                        <label for="recuerdos-images" class="custom-file-upload-label">
+                            <i class="fas fa-image"></i>
+                            <span id="recuerdos-file-name-display">Seleccionar imágenes (múltiples)</span>
+                        </label>
+                        <input type="file" id="recuerdos-images" name="imagenes" accept="image/*" multiple>
+                        <div id="recuerdos-preview-images-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    </div>
+                    <button type="submit">Crear Galería de Recuerdos</button>
+                </form>
+                
+                <!-- Formulario: comisión directiva -->
+                <form id="form-comision" class="product-form" enctype="multipart/form-data" style="display: none;" novalidate>
+                    <input type="hidden" name="tipo" value="comision">
+                    <div>
+                        <label for="comision-name">Nombre:</label>
+                        <input type="text" id="comision-name" name="nombre" required>
+                    </div>
+                    <div>
+                        <label for="comision-cargo">Cargo:</label>
+                        <input type="text" id="comision-cargo" name="cargo" required>
+                    </div>
+                    <div>
+                        <label for="comision-biografia">Biografía:</label>
+                        <textarea id="comision-biografia" name="biografia" maxlength="200" required></textarea>
+                        <span id="comision-biografia-counter" class="char-counter">0/200</span>
+                    </div>
+                    <div class="file-upload-container">
+                        <label for="comision-images" class="custom-file-upload-label">
+                            <i class="fas fa-image"></i>
+                            <span id="comision-file-name-display">Seleccionar foto de perfil</span>
+                        </label>
+                        <input type="file" id="comision-images" name="imagenes" accept="image/*">
+                        <div id="comision-preview-images-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    </div>
+                    <button type="submit">Añadir Miembro</button>
+                </form>
+
+            </div>
+            <div class="search-and-filters">
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Buscar productos...">
+                </div>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="filter-tienda">Filtrar por Tienda:</label>
+                        <select id="filter-tienda">
+                            <option value="todos">Todos</option>
+                            <option value="general">Tienda General</option>
+                            <option value="ropa">Ropa</option>
+                            <option value="electronica">Electrónica</option>
+                            <option value="libros">Libros</option>
+                            <option value="cine">Peliculas</option>
+                            <option value="recuerdos">Galeria de recuerdos</option>
+                            <option value="comision">Comision Directiva</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="sort-by">Ordenar por:</label>
+                        <select id="sort-by">
+                            <option value="none">Sin ordenar</option>
+                            <option value="name-asc">Nombre (A-Z)</option>
+                            <option value="name-desc">Nombre (Z-A)</option>
+                            <option value="price-asc">Precio (Menor a Mayor)</option>
+                            <option value="price-desc">Precio (Mayor a Menor)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="products-list">
+                <h2>Mis Productos</h2>
+                <div id="products-container">
+                    <p id="loading-message">Cargando productos...</p>
+                </div>
+                <div class="pagination-controls">
+                    <button id="prev-page-btn" disabled><i class="fas fa-chevron-left"></i> Anterior</button>
+                    <span id="page-info">Página 1 de 1</span>
+                    <button id="next-page-btn" disabled>Siguiente <i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+        <div id="edit-product-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Editar Producto</h2>
+        <form id="edit-product-form" enctype="multipart/form-data">
+            <input type="hidden" id="edit-product-id">
+            <input type="hidden" id="edit-product-type">
+            
+            <div id="edit-generic-fields">
+                <div>
+                    <label for="edit-product-name">Nombre/Título:</label>
+                    <input type="text" id="edit-product-name">
+                </div>
+                <div>
+                    <label for="edit-product-description">Descripción:</label>
+                    <textarea id="edit-product-description" maxlength="200"></textarea>
+                    <span id="edit-product-description-counter" class="char-counter">0/200</span>
+                </div>
+                <div id="edit-price-field">
+                    <label for="edit-product-price">Precio:</label>
+                    <input type="number" id="edit-product-price" step="0.01">
+                </div>
+            </div>
+
+            <div id="edit-specific-fields">
+                <div id="edit-fields-ropa" style="display: none;">
+                    <div><label for="edit-ropa-color">Color:</label><input type="text" id="edit-ropa-color"></div>
+                    <div><label for="edit-ropa-material">Material:</label><input type="text" id="edit-ropa-material"></div>
+                    <div>
+                        <label>Stock por Talla:</label>
+                        <div id="edit-tallas-stock-container" class="tallas-stock-container"></div>
+                    </div>
+                </div>
+
+                <div id="edit-fields-electronica" style="display: none;">
+                    <div><label for="edit-electronica-brand">Marca:</label><input type="text" id="edit-electronica-brand"></div>
+                    <div><label for="edit-electronica-model">Modelo:</label><input type="text" id="edit-electronica-model"></div>
+                    <div><label for="edit-electronica-specs">Especificaciones Técnicas:</label><textarea id="edit-electronica-specs"></textarea></div>
+                    <div><label for="edit-electronica-stock">Stock:</label><input type="number" id="edit-electronica-stock" min="0"></div>
+                </div>
+
+                <div id="edit-fields-libros" style="display: none;">
+                    <div><label for="edit-libro-stock">Stock:</label><input type="number" id="edit-libro-stock" min="0"></div>
+                    <div><label for="edit-libro-author">Autor:</label><input type="text" id="edit-libro-author"></div>
+                    <div><label for="edit-libro-publisher">Editorial:</label><input type="text" id="edit-libro-publisher"></div>
+                    <div><label for="edit-libro-isbn">ISBN:</label><input type="text" id="edit-libro-isbn"></div>
+                    <div><label for="edit-libro-genre">Género:</label><input type="text" id="edit-libro-genre"></div>
+                </div>
+
+                <div id="edit-fields-general" style="display: none;">
+                    <div><label for="edit-product-sku">SKU:</label><input type="text" id="edit-product-sku"></div>
+                    <div><label for="edit-product-category">Categoría:</label><input type="text" id="edit-product-category"></div>
+                    <div><label for="edit-product-weight">Peso (kg):</label><input type="number" id="edit-product-weight" step="0.01" min="0"></div>
+                    <div><label for="edit-product-status">Estado:</label>
+                        <select id="edit-product-status">
+                            <option value="activo">Activo</option>
+                            <option value="borrador">Borrador</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                    <div><label for="edit-product-stock">Stock:</label><input type="number" id="edit-product-stock" min="0"></div>
+                </div>
+
+                <div id="edit-fields-cine" style="display: none;">
+                    <div style="display: none;"><label for="edit-cine-stock">Stock:</label><input type="number" id="edit-cine-stock" min="0"></div>
+                    <div><label for="edit-cine-duration">Duración:</label><input type="text" id="edit-cine-duration"></div>
+                    <div><label for="edit-cine-genre">Género:</label><input type="text" id="edit-cine-genre"></div>
+                    <div><label for="edit-cine-trailer">Trailer (URL):</label><input type="text" id="edit-cine-trailer"></div>
+                    <div><label for="edit-cine-clasificacion">Clasificación:</label>
+                        <select id="edit-cine-clasificacion">
+                            <option value="ATP">ATP</option>
+                            <option value="+7">+7</option>
+                            <option value="+13">+13</option>
+                            <option value="+16">+16</option>
+                            <option value="+18">+18</option>
+                        </select>
+                    </div>
+                    <div><label for="edit-cine-fecha">Fecha Función:</label><input type="datetime-local" id="edit-cine-fecha"></div>
+                </div>
+
+            <div id="edit-fields-recuerdos" style="display: none;">
+    <div>
+        <label for="edit-recuerdos-title">Título del evento:</label>
+        <input type="text" id="edit-recuerdos-title">
+    </div>
+    <div>
+        <label for="edit-recuerdos-description">Descripción:</label>
+        <textarea id="edit-recuerdos-description" maxlength="200"></textarea>
+        <span id="edit-recuerdos-description-counter" class="char-counter">0/200</span>
+    </div>
+</div>
+
+<div id="edit-fields-comision" style="display: none;">
+    <div>
+        <label for="edit-comision-name">Nombre:</label>
+        <input type="text" id="edit-comision-name">
+    </div>
+    <div>
+        <label for="edit-comision-cargo">Cargo:</label>
+        <input type="text" id="edit-comision-cargo">
+    </div>
+    <div>
+        <label for="edit-comision-biografia">Biografía:</label>
+        <textarea id="edit-comision-biografia" maxlength="200"></textarea>
+        <span id="edit-comision-biografia-counter" class="char-counter">0/200</span>
+        </div>
+    </div>
+</div>
+            <h3>Imágenes Actuales</h3>
+            <div id="current-images-container"></div>
+            <div class="file-upload-container">
+                <label for="edit-product-images" class="custom-file-upload-label">
+                    <i class="fas fa-image"></i>
+                    <span id="edit-file-name-display">Seleccionar imágenes (múltiples)</span>
+                </label>
+                <input type="file" id="edit-product-images" accept="image/*" multiple>
+                <div id="edit-preview-images-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+            </div>
+
+            <button type="submit">Guardar Cambios</button>
+        </form>
+    </div>
+</div>
+
+    </main>
+    <footer>
+        <p>&copy; 2025 Cloudi. Todos los derechos reservados.</p>
+    </footer>
+    <script src="dashboard.js"></script>
+</body>
+</html>

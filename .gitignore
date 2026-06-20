@@ -1,0 +1,20 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (puede tener claves sensibles, nunca se sube)
+.env
+
+# Imágenes subidas por los usuarios durante el uso de la app
+# (la demo las genera dinámicamente; no tiene sentido versionarlas)
+uploads/*
+!uploads/.gitkeep
+
+# Logs
+npm-debug.log*
+*.log
+
+# Archivos del sistema operativo / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

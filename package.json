@@ -1,0 +1,30 @@
+{
+  "name": "cloudi-demo",
+  "version": "1.0.0",
+  "description": "Demo de un panel de administración multi-tienda (login con JWT + CRUD de productos) construido con Node.js, Express y JavaScript puro.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "express",
+    "nodejs",
+    "jwt",
+    "demo",
+    "dashboard",
+    "crud"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "sharp": "^0.34.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
